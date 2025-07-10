@@ -1,14 +1,12 @@
-
 {
   "name": "desk-hub-availability",
   "version": "1.0.0",
-  "main": "server.js",
   "type": "module",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "supersaas-nodejs-api-client": "^1.0.0"
+    "node-fetch": "^3.3.2"
   }
 }
