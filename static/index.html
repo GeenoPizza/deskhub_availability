@@ -1,1 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Desk Hub - Disponibilità</title>
+  <style>
+    .desk { width: 100px; height: 100px; display: inline-block; margin: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Piantina Desk Hub</h1>
+  <div id="desk-map">
+    <div id="Desk_Sharing_postazione_1" class="desk" style="background: green;">DS1</div>
+    <div id="Desk_Sharing_postazione_2" class="desk" style="background: green;">DS2</div>
+    <div id="Desk_Sharing_postazione_3" class="desk" style="background: green;">DS3</div>
+    <div id="Desk_Sharing_postazione_4" class="desk" style="background: green;">DS4</div>
+    <div id="Personal_Desk_postazione_1" class="desk" style="background: green;">PD1</div>
+    <div id="Personal_Desk_postazione_2" class="desk" style="background: green;">PD2</div>
+    <div id="Ufficio_Privato" class="desk" style="background: green;">UP</div>
+  </div>
+
+  <script>
+    async function aggiornaColori() {
+      const res = await fetch('/api/prenotazioni-attive');
+      const occupate = await res.json();
+
+      const postazioni = [
+        'Desk_Sharing_postazione_1',
+        'Desk_Sharing_postazione_2',
+        'Desk_Sharing_postazione_3',
+        'Desk_Sharing_postazione_4',
+        'Personal_Desk_postazione_1',
+        'Personal_Desk_postazione_2',
+        'Ufficio_Privato'
+      ];
+
+      postazioni.forEach(id => {
+        const elem = document.getElementById(id);
+        if (occupate.includes(id)) {
+          elem.style.background = 'red';
+        } else {
+          elem.style.background = 'green';
+        }
+      });
+    }
+
+    aggiornaColori();
+    setInterval(aggiornaColori, 5000);
+  </script>
+</body>
+</html>
 
