@@ -28,7 +28,7 @@ app.get('/api/prenotazioni-attive', async (req, res) => {
     const url = `https://www.supersaas.com/api/appointments?schedule_id=${scheduleId}&from=${from}&to=${to}`;
 
     // Base64 encode API key (user is empty, so apiKey:)
-const auth = Buffer.from(`${apiKey}:`).toString('base64');
+const auth = Buffer.from(`:${apiKey}`).toString('base64');
 
     const response = await fetch(url, {
       headers: {
