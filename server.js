@@ -1,42 +1,64 @@
+import express from 'express';
+import fetch from 'node-fetch';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const express = require('express');
-const path = require('path');
-const SuperSaaSClient = require('supersaas-nodejs-api-client');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = process.env.PORT || 3000;
-
-const client = new SuperSaaSClient({
-  accountName: process.env.SUPERSAAS_ACCOUNT_NAME,
-  apiKey: process.env.SUPERSAAS_API_KEY
-});
 
 app.use(express.static(path.join(__dirname, 'static')));
 
 app.get('/api/prenotazioni-attive', async (req, res) => {
   try {
+    const accountName = process.env.SUPERSAAS_ACCOUNT_NAME;
+    const apiKey = process.env.SUPERSAAS_API_KEY;
+    const scheduleId = process.env.SUPERSAAS_SCHEDULE_ID;
+
+    if (!accountName || !apiKey || !scheduleId) {
+      return res.status(500).json({ error: 'Variabili ambiente mancanti' });
+    }
+
     const now = new Date();
-    const inOneHour = new Date(now.getTime() + 60 * 60 * 1000);
+    const from = now.toISOString();
+    const to = new Date(now.getTime() + 60 * 60 * 1000).toISOString();
 
-    const appointments = await client.appointments.list(
-      process.env.SUPERSAAS_SCHEDULE_ID,
-      {
-        from: now.toISOString(),
-        to: inOneHour.toISOString()
+    const url = `https://www.supersaas.com/api/appointments?schedule_id=${scheduleId}&from=${from}&to=${to}`;
+
+    // Base64 encode API key (user is empty, so apiKey:)
+    const auth = Buffer.from(`${apiKey}:`).toString('base64');
+
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Basic ${auth}`
       }
-    );
+    });
 
-    const occupate = appointments
-      .filter(a => new Date(a.start) <= now && new Date(a.finish) >= now)
-      .map(a => a.resource);
+    if (!response.ok) {
+      const text = await response.text();
+      console.error('Errore API SuperSaaS:', text);
+      return res.status(500).json({ error: 'Errore API SuperSaaS' });
+    }
+
+    const appointments = await response.json();
+
+    // Filtra solo quelli attivi ora
+    const occupate = appointments.filter(a => {
+      const start = new Date(a.start);
+      const end = new Date(a.finish);
+      return start <= now && end >= now;
+    }).map(a => a.resource);
 
     res.json(occupate);
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'Errore recupero prenotazioni' });
+
+  } catch (error) {
+    console.error('Errore server:', error);
+    res.status(500).json({ error: 'Errore interno server' });
   }
 });
 
 app.listen(port, () => {
-  console.log(`Server in ascolto su porta ${port}`);
+  console.log(`Server in ascolto sulla porta ${port}`);
 });
